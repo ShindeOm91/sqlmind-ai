@@ -12,6 +12,7 @@ import com.sqlmind.entity.User;
 import com.sqlmind.exception.InvalidCredentialsException;
 import com.sqlmind.exception.UserAlreadyExistsException;
 import com.sqlmind.repository.UserRepository;
+import com.sqlmind.security.JwtService;
 import com.sqlmind.service.UserService;
 
 @Service
@@ -19,12 +20,13 @@ public class UserServiceImpl implements UserService {
 
 	private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public UserServiceImpl(UserRepository userRepository,
-                           PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
+	public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+		this.userRepository = userRepository;
+		this.passwordEncoder = passwordEncoder;
+		this.jwtService = jwtService;
+	}
         
 	@Override
     public RegisterResponse register(RegisterRequest request) {
@@ -61,11 +63,18 @@ public class UserServiceImpl implements UserService {
 	    }
 
 	    LoginResponse response = new LoginResponse();
+	    
+	    String token = jwtService.generateToken(
+	            user.getId(),
+	            user.getEmail(),
+	            user.getRole()
+	    );
 
+	    response.setAccessToken(token);
+	    response.setTokenType("Bearer");
 	    response.setUserId(user.getId());
 	    response.setFullName(user.getFullName());
 	    response.setEmail(user.getEmail());
-	    response.setTokenType("Bearer");
 
 	    return response;
 	}
